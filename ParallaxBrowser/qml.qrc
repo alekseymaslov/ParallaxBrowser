@@ -2,5 +2,7 @@
     <qresource prefix="/">
         <file>main.qml</file>
         <file>DefaultItemWebPage.qml</file>
+        <file>SettingsDialogue.qml</file>
+        <file>Menu.qml</file>
     </qresource>
 </RCC>

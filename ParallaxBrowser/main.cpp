@@ -1,13 +1,27 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
+#include <QtWebEngine>
+#include <QWebEngineProfile>
+#include <QDir>
+#include <QDebug>
 
-#include <webpagehandler.h>
+#include <iostream>
+#include <memory>
+#include <chrono>
+#include <future>
+
+#include "remapkeys.h"
+#include "pagehandler.h"
+#include "screenhandler.h"
+#include "messagehandler.h"
+
 
 int main(int argc, char *argv[])
 {
-    
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+    QCoreApplication::setAttribute(Qt::AA_UseOpenGLES);
 
+    QtWebEngine::initialize();
     QGuiApplication app(argc, argv);
 
     QQmlApplicationEngine engine;
@@ -19,15 +33,27 @@ int main(int argc, char *argv[])
     }, Qt::QueuedConnection);
     engine.load(url);
     
-//     QObject *rootObject = engine.rootObjects().first();
-//     QObject *frameForWebPage = rootObject->findChild<QObject*>("frameForWebPage");
-//     
-//     WebPageHandler webpagehandler(frameForWebPage);
-//     QObject *roundButtonNewPage = rootObject->findChild<QObject*>("roundButtonNewPage");
-//     QObject::connect(roundButtonNewPage, SIGNAL(clicked()),
-//         &webpagehandler, SLOT(AddPage()));
+    std::shared_ptr<RemapKeys> remapKeys =  std::make_shared<RemapKeys>();
+    app.installEventFilter(remapKeys.get());
 
+    auto root = engine.rootObjects()[0];
+    QObject *swipeViewWebPages = root->findChild<QObject*>("swipeViewWebPages");
+    PageHandler pageHandler(swipeViewWebPages, app.applicationDirPath());
+    ScreenHandler sreenHandler(swipeViewWebPages);
+    MessageHandler messageHandler(root);
+
+    pageHandler.LoadPages();
+    messageHandler.Init();
     
+    QObject::connect(QCoreApplication::instance(), SIGNAL(aboutToQuit()), &pageHandler, SLOT(SavePages()));
 
-    return app.exec();
+    QObject::connect(&app, SIGNAL(applicationStateChanged(Qt::ApplicationState)), &sreenHandler, SLOT(CheckState(Qt::ApplicationState)));
+
+
+    qDebug() << QStandardPaths::writableLocation(QStandardPaths::DataLocation);
+    qDebug() <<app.applicationDirPath();
+
+
+    int result = app.exec();
+    return result;
 }

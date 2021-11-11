@@ -2,12 +2,13 @@ import QtQuick 2.12
 import QtQuick.Window 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.3
+import QtQuick.Dialogs 1.2
 
 
 Window {
     id: window
     visible: true
-    width: 400
+    width: 500
     height: 600
     title: qsTr("Parallax")
 
@@ -45,34 +46,61 @@ Window {
                 cursorVisible: true
                 Layout.fillWidth: true
                 font.pixelSize: 12
+
+                function performSearch() {
+                    swipeViewWebPages.currentItem.setUrl("https://www.google.com/search?q=" + text)
+                }
+
+                onFocusChanged:{
+                   if(focus) {
+                        selectAll()
+                   }
+                }
+
                 Keys.onEnterPressed: {
-                    swipeViewWebPages.currentItem.setUrl(text)
+                    performSearch()
+                }
+
+                Keys.onReturnPressed: {
+                    performSearch()
                 }
             }
 
             RoundButton {
                 id: roundButtonReload
                 text: "R"
-                onClicked: swipeViewWebPages.currentItem.reload()
+                onClicked: {
+                    swipeViewWebPages.currentItem.reload()
+                }
             }
 
             ToolButton {
-                id: toolButton
-                text: qsTr("Settings")
+                id: toolMenu
+                text: qsTr("Menu")
+                onClicked: {
+                    var component = Qt.createComponent("Menu.qml");
+                    var item = component.createObject(window);
+                    item.height = window.height - 10
+                    item.width = window.width - 10
+                    item.setItem(swipeViewWebPages.currentItem)
+                    item.open()
+                }
             }
-
-
         }
-
 
         SwipeView {
             id: swipeViewWebPages
+            objectName: "swipeViewWebPages"
+
             interactive: false
             Layout.fillWidth: true
             Layout.fillHeight: true
 
+            property var perviousItem: "undefined"
+
             Item {
                 id: elementAdd
+                objectName: "elementAdd"
                 x: -9
                 y: -8
 
@@ -85,13 +113,20 @@ Window {
                         swipeViewWebPages.addPage()
                     }
                 }
-
-
             }
+
 
             onCurrentItemChanged: {
                 onShowRemovePage()
-                textEditHttpsAdder.text = swipeViewWebPages.currentItem.getUrl()
+                if (currentItem != elementAdd) {
+                    textEditHttpsAdder.text = currentItem.getUrl().toString()
+                    currentItem.setEnable()
+                    if(perviousItem !== "undefined") {
+                        perviousItem.setDisable()
+                    }
+                    perviousItem = currentItem
+
+                }
             }
 
             onCountChanged:  {
@@ -111,19 +146,38 @@ Window {
 
             function addPage(page) {
                 var index = swipeViewWebPages.currentIndex
-                swipeViewWebPages.insertItem(index, swipeViewWebPages.createItem())
+                var item = swipeViewWebPages.createItem()
+                swipeViewWebPages.insertItem(index, item)
                 swipeViewWebPages.setCurrentIndex(index)
+                item.setMainWindow(window)
+                if(page) {
+                    item.setUrl(page)
+                }
             }
 
-            function createItem(){
+            function createItem() {
                 var component = Qt.createComponent("DefaultItemWebPage.qml");
                 var item = component.createObject(swipeViewWebPages);
                 //TODO: check if successful
                 return item
             }
+
+            function getPagesUrls(pageNumber) {
+                var page = swipeViewWebPages.itemAt(pageNumber)
+                if (currentItem != elementAdd) {
+                    return page.getUrl()
+                }
+                return ""
+            }
+
+            function getPageCount() {
+                return swipeViewWebPages.count - 1
+            }
+
+            function setForcePageActive(force : bool) {
+                swipeViewWebPages.currentItem.setForceActive(force);
+            }
         }
-
-
 
         PageIndicator {
             id: pageIndicator
@@ -195,7 +249,23 @@ Window {
         }
     }
 
+    function hideControls() {
+        rowLayout.visible = false
+        frame.visible = false
+    }
 
+    function showControls() {
+        rowLayout.visible = true
+        frame.visible = true
+    }
+
+    function exposeNotification(notification) {
+        console.log("message received tag:" + notification.tag)
+
+        onNotificationRecived(notification.title, notification.message)
+    }
+
+    signal onNotificationRecived(title: string, msg: string)
 }
 
 

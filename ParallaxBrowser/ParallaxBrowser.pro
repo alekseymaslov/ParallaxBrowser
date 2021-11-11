@@ -1,7 +1,9 @@
 QT += quick
 QT += widgets
+QT += webengine
+QT += webenginewidgets
 
-CONFIG += c++11
+CONFIG += c++17
 
 # The following define makes your compiler emit warnings if you use
 # any Qt feature that has been marked deprecated (the exact warnings
@@ -16,7 +18,10 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
         main.cpp \
-        webpagehandler.cpp
+        messagehandler.cpp \
+        pagehandler.cpp \
+        remapkeys.cpp \
+        screenhandler.cpp
 
 RESOURCES += qml.qrc
 
@@ -35,4 +40,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 HEADERS += \
-    webpagehandler.h
+    messagehandler.h \
+    pagehandler.h \
+    remapkeys.h \
+    screenhandler.h
