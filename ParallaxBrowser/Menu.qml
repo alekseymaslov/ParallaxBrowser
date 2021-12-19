@@ -5,6 +5,7 @@ import QtQuick.Dialogs 1.2
 
 Dialog {
     title: "Menu"
+    id: menu
     property var webPage: {''}
 
     standardButtons: Dialog.Ok | Dialog.Cancel
@@ -29,13 +30,13 @@ Dialog {
 
         Button {
             id: settings
-            text: qsTr("Settings")
+            text: qsTr("Genral Settings")
             Layout.fillWidth: true
         }
 
         Button {
             id: addBookmarks
-            text: qsTr("Add bookmarks")
+            text: qsTr("Add to bookmarks")
             Layout.fillWidth: true
         }
 
@@ -51,10 +52,16 @@ Dialog {
                 font.pixelSize: 21
             }
 
+            Button {
+                id: buttonLoad
+                text: qsTr("Load")
+            }
+
             ComboBox {
                 id: comboBox
                 Layout.fillWidth: true
             }
+
 
         }
 
@@ -70,6 +77,42 @@ Dialog {
             }
         }
 
+        Switch {
+            id: pageSleep
+            text: qsTr("Page stay awake")
+            onCheckedChanged: {
+                if(webPage.setStayWakeup) {
+                    webPage.setStayWakeup(pageSleep.checked)
+                }
+            }
+        }
+
+        Switch {
+            id: allowNotification
+            text: qsTr("Allow page notification")
+            onCheckedChanged: {
+                if(webPage.setNotoficationAllow) {
+                    webPage.setNotoficationAllow(allowNotification.checked)
+                }
+            }
+        }
+
+        Switch {
+            id: allowGeoLoacation
+            text: qsTr("Allow page geoloaction access")
+            onCheckedChanged: {
+                if(webPage.setGeoloacationAllow) {
+                     webPage.setGeoloacationAllow(allowGeoLoacation.checked)
+                }
+            }
+        }
+
+        Button {
+            id: clearCache
+            text: qsTr("Clear page cache")
+            Layout.fillWidth: true
+            onClicked: webPage.onCacheClear()
+        }
     }
 
     function setItem(page) {
@@ -81,6 +124,24 @@ Dialog {
         if(page.getScrollbarStatus()) {
             if(!scrollbar.checked) {
                 scrollbar.toggle()
+            }
+        }
+
+        if(page.getStayWakeup()) {
+            if(!pageSleep.checked) {
+                pageSleep.toggle()
+            }
+        }
+
+        if(page.getNotoficationAllow()) {
+            if(!allowNotification.checked) {
+                allowNotification.toggle()
+            }
+        }
+
+        if(page.getGeoloacationAllow()) {
+            if(!allowGeoLoacation.checked) {
+                allowGeoLoacation.toggle()
             }
         }
 

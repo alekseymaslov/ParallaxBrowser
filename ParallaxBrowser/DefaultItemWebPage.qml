@@ -41,6 +41,12 @@ Item {
                 property var feature: 0
                 property var securityOrigin: ""
                 onAccepted: function() {
+                    if(WebEngineView.Notifications === feature) {
+                        webviewMain.notoficationAllow = true
+                    }
+                    else if(WebEngineView.Geolocation === feature) {
+                        webviewMain.geoloacationAllow = true
+                    }
                     webviewMain.grantFeaturePermission(securityOrigin, feature, true);
                 }
             }
@@ -48,17 +54,22 @@ Item {
             WebEngineView {
                id: webviewMain
                objectName: "webviewMain"
-               url: "https://www.google.com/"
+               url: defaultUrl
                anchors.fill: parent
                settings.defaultTextEncoding: "utf-16"
                settings.focusOnNavigationEnabled: false
 
+               property var defaultUrl: "https://www.google.com/"
                property var mainWindow: ({})
+               property var stayWakeup: false
+               property var notoficationAllow: false
+               property var geoloacationAllow: false
                property var is_desktop: 0
 
                profile.httpUserAgent: "Mozilla/5.0 (Linux; Android 11; Pixel 4 XL) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.105 Mobile Safari/537.36"
 
                settings.showScrollBars: false
+
 
                onLoadingChanged: {
                     if (loadRequest.status ==  WebEngineView.LoadSucceededStatus) {
@@ -91,19 +102,32 @@ Item {
                 onFeaturePermissionRequested: function(securityOrigin, feature) {
                     console.log("This site ask about " + feature);
                     if(WebEngineView.Notifications === feature) {
-                        askPermission.feature = feature
-                        askPermission.securityOrigin = securityOrigin
-                        askPermission.title = "This site request\n push up notification permission."
-                        askPermission.open()
+                        if(!notoficationAllow) {
+                            askPermission.feature = feature
+                            askPermission.securityOrigin = securityOrigin
+                            askPermission.title = "This site request\n push up notification permission."
+                            askPermission.open()
+                        } else {
+                            webviewMain.grantFeaturePermission(securityOrigin, feature, true);
+                        }
+
                     } else if (WebEngineView.Geolocation === feature) {
-                        askPermission.feature = feature
-                        askPermission.securityOrigin = securityOrigin
-                        askPermission.title = "This site request\n push up geolocation permission."
-                        askPermission.open()
+                        if(!geoloacationAllow) {
+                            askPermission.feature = feature
+                            askPermission.securityOrigin = securityOrigin
+                            askPermission.title = "This site request\n push up geolocation permission."
+                            askPermission.open()
+                        } else {
+                            webviewMain.grantFeaturePermission(securityOrigin, feature, true);
+                        }
                     }
                 }
             }
         }
+    }
+
+    function booleanToString(flag: bool) {
+        return flag ? "true" : "false"
     }
 
     function goBack() {
@@ -125,6 +149,28 @@ Item {
 
     function getUrl() {
         return webviewMain.url
+    }
+
+    function setMetaData(metadata: string) {
+        var jsonObject = JSON.parse(metadata)
+        var pageStruct = jsonObject.PageStruct
+        webviewMain.url = pageStruct[0]['url']
+        webviewMain.stayWakeup = pageStruct[0]['stayWakeup']
+        webviewMain.notoficationAllow = pageStruct[0]['notoficationAllow']
+        webviewMain.geoloacationAllow = pageStruct[0]['geoloacationAllow']
+    }
+
+    function getMetaData() : string {
+        var jsonString = '{"PageStruct":[{"url": "%1" }, {"stayWakeup": %2},
+                          {"notoficationAllow": %3}, {"geoloacationAllow": %4}]}'
+        jsonString = jsonString.arg(webviewMain.url).
+            arg(booleanToString(webviewMain.stayWakeup)).
+            arg(booleanToString(webviewMain.notoficationAllow)).
+            arg(booleanToString(webviewMain.geoloacationAllow))
+
+        console.log(jsonString)
+        console.log(webviewMain.notoficationAllow)
+        return jsonString
     }
 
     function setMainWindow(mainWindow) {
@@ -149,8 +195,10 @@ Item {
 
     function setDisable() {
         console.log("setDisable url: " + webviewMain.url)
-        webviewMain.visible = false
-        webviewMain.lifecycleState = WebEngineView.LifecycleState.Frozen;
+        if(!webviewMain.stayWakeup) {
+            webviewMain.visible = false
+            webviewMain.lifecycleState = WebEngineView.LifecycleState.Frozen;
+        }
     }
 
     function setEnable() {
@@ -173,7 +221,23 @@ Item {
     }
 
     function setScrollbarStatus(flag) {
+       console.log("setScrollbarStatus : " + flag)
         webviewMain.settings.showScrollBars = flag
+    }
+
+    function getStayWakeup() {return webviewMain.stayWakeup}
+    function setStayWakeup(flag: bool) {webviewMain.stayWakeup = flag}
+    function getNotoficationAllow() {return webviewMain.notoficationAllow}
+    function setNotoficationAllow(flag: bool) { webviewMain.notoficationAllow = flag}
+    function getGeoloacationAllow() {return webviewMain.geoloacationAllow}
+    function setGeoloacationAllow(flag: bool) {webviewMain.geoloacationAllow = flag}
+    function onCacheClear() {
+        console.log("cachePath: " + webviewMain.profile.cachePath)
+        webviewMain.profile.clearHttpCache()
+        webviewMain.reload()
+        var cookiePolicy =  webviewMain.profile.persistentCookiesPolicy
+        webviewMain.profile.persistentCookiesPolicy = WebEngineProfile.NoPersistentCookies
+        webviewMain.profile.persistentCookiesPolicy = cookiePolicy
     }
 }
 

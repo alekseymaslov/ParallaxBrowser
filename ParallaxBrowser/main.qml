@@ -52,9 +52,9 @@ Window {
                 }
 
                 onFocusChanged:{
-                   if(focus) {
+                    if(focus) {
                         selectAll()
-                   }
+                    }
                 }
 
                 Keys.onEnterPressed: {
@@ -97,6 +97,8 @@ Window {
             Layout.fillHeight: true
 
             property var perviousItem: "undefined"
+            x: 0
+            y: 238
 
             Item {
                 id: elementAdd
@@ -144,14 +146,15 @@ Window {
                 }
             }
 
-            function addPage(page) {
+            function addPage(page: string) {
                 var index = swipeViewWebPages.currentIndex
                 var item = swipeViewWebPages.createItem()
                 swipeViewWebPages.insertItem(index, item)
                 swipeViewWebPages.setCurrentIndex(index)
                 item.setMainWindow(window)
                 if(page) {
-                    item.setUrl(page)
+                    //item.setUrl(page)
+                    item.setMetaData(page)
                 }
             }
 
@@ -170,108 +173,162 @@ Window {
                 return ""
             }
 
-            function getPageCount() {
-                return swipeViewWebPages.count - 1
-            }
-
-            function setForcePageActive(force : bool) {
-                swipeViewWebPages.currentItem.setForceActive(force);
-            }
-        }
-
-        PageIndicator {
-            id: pageIndicator
-            visible: false
-            Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-            count: swipeViewWebPages.count
-            currentIndex: swipeViewWebPages.currentIndex
-        }
-
-        Frame {
-            id: frame
-            width: 200
-            height: 200
-            Layout.preferredHeight: -1
-            Layout.fillWidth: true
-
-            RowLayout {
-                id: rowLayout1
-                anchors.fill: parent
-
-                Button {
-                    id: buttonBack
-                    text: qsTr("<-")
-                    onClicked: swipeViewWebPages.currentItem.goBack();
+            function getPagesMetaData(pageNumber) : string {
+                var page = swipeViewWebPages.itemAt(pageNumber)
+                if (currentItem != elementAdd) {
+                    return page.getMetaData()
+                }
+                    return ""
                 }
 
-                Button {
-                    id: buttonPages
-                    text: qsTr("Pages")
-                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-                    onClicked: {
-                        buttonPages.down = !buttonPages.down
-                        pageIndicator.visible = !pageIndicator.visible
-                        swipeViewWebPages.interactive = !swipeViewWebPages.interactive
-                        if(!buttonPages.down) {
-                            roundButtonRemovePage.visible = false
-                            roundButtonRemovePage.enabled = false
-                        } else
-                        {
-                            swipeViewWebPages.onShowRemovePage()
-                        }
+                    function getPageCount() {
+                        return swipeViewWebPages.count - 1
                     }
-                }
 
-                Button {
-                    id: buttonForward
-                    text: qsTr("->")
-                    Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
-                    onClicked: swipeViewWebPages.currentItem.goForward()
-                }
-            }
-        }
-    }
+                        function setForcePageActive(force : bool) {
+                        if (currentItem != elementAdd) {
+                            currentItem.setForceActive(force);
+                        }
+                        }
+                        }
 
-    RoundButton {
-        id: roundButtonRemovePage
-        x: 288
-        y: 196
-        text: "-"
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.verticalCenter: parent.verticalCenter
-        Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-        visible: false
-        enabled: false
-        onClicked: {
-            if (swipeViewWebPages.currentItem !== swipeViewWebPages.elementAdd) {
-                swipeViewWebPages.removeItem(swipeViewWebPages.currentItem)
-            }
-        }
-    }
-
-    function hideControls() {
-        rowLayout.visible = false
-        frame.visible = false
-    }
-
-    function showControls() {
-        rowLayout.visible = true
-        frame.visible = true
-    }
-
-    function exposeNotification(notification) {
-        console.log("message received tag:" + notification.tag)
-
-        onNotificationRecived(notification.title, notification.message)
-    }
-
-    signal onNotificationRecived(title: string, msg: string)
-}
+                            PageIndicator {
+                                id: pageIndicator
+                                visible: false
+                                Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                                count: swipeViewWebPages.count
+                                currentIndex: swipeViewWebPages.currentIndex
+                            }
 
 
+                            MouseArea {
+                                id: mouseAreaControlUp
+                                width: 100
+                                height: 20
+                                clip: true
+                                Layout.fillWidth: true
+                                onPressed: {
+                                    if(frameLowControls.visible) {
+                                        rowLayout.visible = false
+                                        frameLowControls.visible = false
+                                        imageArrow.rotation  = 0.0
+                                    }
+                                    else {
+                                        rowLayout.visible = true
+                                        frameLowControls.visible = true
+                                        imageArrow.rotation  = 180.0
+                                    }
+                                }
 
-/*##^##
+                                Image {
+                                    id: imageArrow
+                                    rotation: 180
+                                    anchors.fill: parent
+                                    fillMode: Image.PreserveAspectFit
+                                    source: "arrow.png"
+                                }
+
+                                function makeVisible() {
+                                    mouseAreaControlUp.visible = true
+                                    imageArrow.rotation  = 180.0
+                                }
+
+                                function makeInVisible() {
+                                    mouseAreaControlUp.visible = false
+                                    imageArrow.rotation  = 0.0
+                                }
+                            }
+
+                            Frame {
+                                id: frameLowControls
+                                width: 200
+                                height: 200
+                                visible: true
+                                Layout.preferredHeight: -1
+                                Layout.fillWidth: true
+
+                                RowLayout {
+                                    id: rowLayout1
+                                    anchors.fill: parent
+
+                                    Button {
+                                        id: buttonBack
+                                        text: qsTr("<-")
+                                        onClicked: swipeViewWebPages.currentItem.goBack();
+                                    }
+
+                                    Button {
+                                        id: buttonPages
+                                        text: qsTr("Pages")
+                                        Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                                        onClicked: {
+                                            buttonPages.down = !buttonPages.down
+                                            pageIndicator.visible = !pageIndicator.visible
+                                            swipeViewWebPages.interactive = !swipeViewWebPages.interactive
+                                            if(!buttonPages.down) {
+                                                roundButtonRemovePage.visible = false
+                                                roundButtonRemovePage.enabled = false
+                                            } else
+                                            {
+                                                swipeViewWebPages.onShowRemovePage()
+                                            }
+                                        }
+                                    }
+
+                                    Button {
+                                        id: buttonForward
+                                        text: qsTr("->")
+                                        Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+                                        onClicked: swipeViewWebPages.currentItem.goForward()
+                                    }
+                                }
+                            }
+
+                        }
+
+                        RoundButton {
+                            id: roundButtonRemovePage
+                            x: 288
+                            y: 196
+                            text: "-"
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            anchors.verticalCenter: parent.verticalCenter
+                            Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                            visible: false
+                            enabled: false
+                            onClicked: {
+                                if (swipeViewWebPages.currentItem !== swipeViewWebPages.elementAdd) {
+                                    swipeViewWebPages.removeItem(swipeViewWebPages.currentItem)
+                                }
+                            }
+                        }
+
+                        function hideControls() {
+                            mouseAreaControlUp.makeInVisible()
+                            rowLayout.visible = false
+                            frameLowControls.visible = false
+                        }
+
+                        function showControls() {
+                            mouseAreaControlUp.makeVisible()
+                            rowLayout.visible = true
+                            frameLowControls.visible = true
+                        }
+
+                        function exposeNotification(notification) {
+                            console.log("message received tag:" + notification.tag)
+
+                            onNotificationRecived(notification.title, notification.message)
+                        }
+
+                        signal onNotificationRecived(title: string, msg: string)
+                    }
+
+
+
+                    /*##^##
 Designer {
-    D{i:8;anchors_height:200;anchors_width:200;anchors_x:0;anchors_y:327}D{i:11;anchors_x:"-9";anchors_y:"-8"}
+    D{i:7;anchors_height:200;anchors_width:200;anchors_x:0;anchors_y:327}D{i:6;anchors_x:0;anchors_y:238}
+D{i:11;anchors_height:100;anchors_width:100}D{i:12;anchors_height:100;anchors_width:100}
 }
 ##^##*/

@@ -52,7 +52,7 @@ void PageHandler::LoadPages()
          qDebug() << jsonPage[QString(i)].toString();
 
          QMetaObject::invokeMethod(mSwipeView, "addPage",
-                  Q_ARG(QVariant, QVariant(jsonPage[QString(i)].toString())));
+                  Q_ARG(QString, QString(jsonPage[QString(i)].toString())));
     }
 }
 
@@ -75,17 +75,17 @@ void PageHandler::SavePages()
     int pageCount = returnedValue.toInt();
     for(int i = 0; i < pageCount; i++ )
     {
-         QVariant page;
-         QMetaObject::invokeMethod(mSwipeView, "getPagesUrls",
-                 Q_RETURN_ARG(QVariant, page),
+         QString page;
+         QMetaObject::invokeMethod(mSwipeView, "getPagesMetaData",
+                 Q_RETURN_ARG(QString, page),
                  Q_ARG(QVariant, QVariant(i)));
 
-         if(!page.toString().isEmpty())
+         if(!page.isEmpty())
          {
-             pageToSave.push_back(page.toString());
-             qDebug() << page.toString();
+             pageToSave.push_back(page);
+             qDebug() << page;
              QJsonObject jsonPage;
-             jsonPage.insert(QString(i), page.toString());
+             jsonPage.insert(QString(i), page);
              jsonPages.append(jsonPage);
          }
     }
